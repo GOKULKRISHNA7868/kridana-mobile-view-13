@@ -273,6 +273,10 @@ const StudentsAttendancePage = () => {
     return Array.from(set);
   }, [students]);
   const handleSaveAll = async () => {
+    if (!selectedCategory || !selectedSubCategory) {
+      alert("Please select both Category and Sub Category before saving ❌");
+      return;
+    }
     for (const rec of Object.values(draftAttendance)) {
       if (rec?.status === "absent" && !rec?.reason) {
         alert("Please select reason for all absent students");
@@ -554,7 +558,10 @@ const StudentsAttendancePage = () => {
           </select>
 
           {/* TIMINGS */}
-          <div ref={timeRef} className="relative w-full sm:w-auto min-w-0 sm:min-w-[150px]">
+          <div
+            ref={timeRef}
+            className="relative w-full sm:w-auto min-w-0 sm:min-w-[150px]"
+          >
             <button
               onClick={() => setShowTimeDropdown(!showTimeDropdown)}
               className="w-full border border-orange-300 bg-white rounded-lg px-4 py-2 font-semibold flex items-center justify-between"
@@ -567,8 +574,9 @@ const StudentsAttendancePage = () => {
 
               <ChevronDown
                 size={18}
-                className={`transition-transform ${showTimeDropdown ? "rotate-180" : ""
-                  }`}
+                className={`transition-transform ${
+                  showTimeDropdown ? "rotate-180" : ""
+                }`}
               />
             </button>
 
@@ -608,8 +616,6 @@ const StudentsAttendancePage = () => {
             const record = draftAttendance[key];
 
             return (
-
-
               <div
                 key={s.uid}
                 className="grid grid-cols-5 min-w-[700px] px-6 py-4 border-t items-center"
@@ -657,7 +663,6 @@ const StudentsAttendancePage = () => {
                   )}
                 </div>
               </div>
-
             );
           })}
         </div>
@@ -674,8 +679,9 @@ const StudentsAttendancePage = () => {
         <button
           onClick={handleSaveAll}
           disabled={!hasChanges}
-          className={`px-5 py-2 rounded-md text-white ${hasChanges ? "bg-orange-500" : "bg-gray-400 cursor-not-allowed"
-            }`}
+          className={`px-5 py-2 rounded-md text-white ${
+            hasChanges ? "bg-orange-500" : "bg-gray-400 cursor-not-allowed"
+          }`}
         >
           Save
         </button>

@@ -353,28 +353,7 @@ export default function AddTrainerDetailsPage() {
       setProfilePreview(URL.createObjectURL(file));
     }
   };
-  useEffect(() => {
-    const fetchRegisterNumber = async () => {
-      if (!user?.uid) return;
 
-      const ref = doc(db, "trainers", user.uid);
-      const snap = await getDoc(ref);
-
-      if (snap.exists()) {
-        const config = snap.data().registerConfig;
-
-        if (config) {
-          const nextNumber = config.counter || 1;
-          const prefix = config.prefix || "";
-
-          const formatted = `${prefix}${String(nextNumber).padStart(4, "0")}`;
-          setRegisterNumber(formatted);
-        }
-      }
-    };
-
-    fetchRegisterNumber();
-  }, [user]);
   /* -------------------- FORM DATA -------------------- */
   const [formData, setFormData] = useState({
     firstName: "",
@@ -450,7 +429,9 @@ export default function AddTrainerDetailsPage() {
 
       if (!formData.subCategory)
         newErrors.subCategory = "Sub Category is required";
-
+      if (!registerNumber.trim()) {
+        newErrors.registerNumber = "Register Number is required";
+      }
       if (!formData.sessions) newErrors.sessions = "Session is required";
 
       if (!formData.timings) newErrors.timings = "Timings are required";
@@ -560,7 +541,7 @@ export default function AddTrainerDetailsPage() {
       address: "",
       aadharFiles: [],
     });
-
+    setRegisterNumber("");
     setProfilePreview(null);
     setAvailableSubCategories([]);
     setStep(1);
@@ -637,31 +618,7 @@ export default function AddTrainerDetailsPage() {
   // -------------------- HANDLE SUBMIT --------------------
   const handleSubmit = async () => {
     if (isSaving) return;
-    let finalRegisterNumber = "";
 
-    await runTransaction(db, async (transaction) => {
-      const trainerRef = doc(db, "trainers", user.uid);
-      const trainerSnap = await transaction.get(trainerRef);
-
-      if (!trainerSnap.exists()) {
-        throw new Error("Trainer config not found");
-      }
-
-      const config = trainerSnap.data().registerConfig;
-
-      if (!config) {
-        throw new Error("Register config missing");
-      }
-
-      const currentCounter = config.counter || 1;
-      const prefix = config.prefix || "";
-
-      finalRegisterNumber = `${prefix}${String(currentCounter).padStart(4, "0")}`;
-
-      transaction.update(trainerRef, {
-        "registerConfig.counter": currentCounter + 1,
-      });
-    });
     if (!validateStep()) {
       alert("Please fill all required fields");
       return;
@@ -757,7 +714,7 @@ export default function AddTrainerDetailsPage() {
     ============================== */
       await setDoc(doc(db, "trainerstudents", studentUid), {
         ...rest,
-        registerNumber: finalRegisterNumber,
+        registerNumber: registerNumber,
         sports: [sportData],
         aadharFilesCount: aadharFiles.length,
         profileImageUrl,
@@ -780,17 +737,6 @@ export default function AddTrainerDetailsPage() {
         );
       } else {
         alert("Student created successfully!");
-      }
-      const ref = doc(db, "trainers", user.uid);
-      const snap = await getDoc(ref);
-
-      if (snap.exists()) {
-        const config = snap.data().registerConfig;
-        const nextNumber = config.counter || 1;
-        const prefix = config.prefix || "";
-
-        const formatted = `${prefix}${String(nextNumber).padStart(4, "0")}`;
-        setRegisterNumber(formatted);
       }
 
       /* ==============================
@@ -937,7 +883,7 @@ export default function AddTrainerDetailsPage() {
     <div className="min-h-screen flex justify-center bg-white py-10">
       <div className="w-full max-w-5xl p-2">
         {/* HEADER */}
-       <div className="flex flex-col lg:flex-row items-center justify-between gap-4 sm:gap-6 mb-8 sm:mb-10 text-center lg:text-left">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-4 sm:gap-6 mb-8 sm:mb-10 text-center lg:text-left">
           {/* PROFILE */}
           {/* LEFT : Upload Profile */}
           <div className="flex flex-col items-center mt-6 w-full lg:w-auto">
@@ -972,7 +918,13 @@ export default function AddTrainerDetailsPage() {
           <div className="text-center mb-4">
             <h3 className="text-lg font-semibold text-gray-700">
               Register No:{" "}
-              <span className="text-orange-500">{registerNumber}</span>
+              <input
+                type="text"
+                className="border px-3 py-1 rounded-md text-center text-orange-500 font-semibold"
+                value={registerNumber}
+                onChange={(e) => setRegisterNumber(e.target.value)}
+                placeholder="Enter Register Number"
+              />
             </h3>
           </div>
           {/* TITLE */}
@@ -983,7 +935,7 @@ export default function AddTrainerDetailsPage() {
 
             <p className="mt-4">Step {step} to 2</p>
 
-           <div className="flex gap-4 mt-4 w-full max-w-xl">
+            <div className="flex gap-4 mt-4 w-full max-w-xl">
               {[1, 2].map((s) => (
                 <div
                   key={s}
@@ -999,7 +951,7 @@ export default function AddTrainerDetailsPage() {
 
         {/* STEP 1 */}
         {step === 1 && (
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
             {/* Row 1 */}
             <div className="flex flex-col">
               <label className="text-sm font-semibold mb-2">

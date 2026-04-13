@@ -41,7 +41,7 @@ const FeesDetailsPage = () => {
   const [selectedYear, setSelectedYear] = useState(
     new Date().getFullYear().toString(),
   );
-
+  const [selectedBranch, setSelectedBranch] = useState("");
   const [search, setSearch] = useState("");
 
   const [showMonthDropdown, setShowMonthDropdown] = useState(false);
@@ -124,6 +124,13 @@ const FeesDetailsPage = () => {
         .map((sp) => sp.subCategory),
     ),
   ];
+  const branches = useMemo(() => {
+    return [
+      ...new Set(
+        students.map((s) => s.branch).filter((b) => b && b.trim() !== ""),
+      ),
+    ];
+  }, [students]);
   const filteredStudents = useMemo(() => {
     return students.filter((s) => {
       const matchesSearch = `${s.firstName} ${s.lastName}`
@@ -131,6 +138,9 @@ const FeesDetailsPage = () => {
         .includes(search.toLowerCase());
 
       if (!matchesSearch) return false;
+      if (selectedBranch && s.branch !== selectedBranch) {
+        return false;
+      }
       if (!selectedMonth || !selectedYear) return true;
 
       const selectedDate = new Date(
@@ -177,7 +187,7 @@ const FeesDetailsPage = () => {
 
       return true;
     });
-  }, [students, search, selectedMonth, selectedYear]);
+  }, [students, search, selectedMonth, selectedYear, selectedBranch]);
   const filteredRows = useMemo(() => {
     let rows = [];
 
@@ -391,7 +401,18 @@ const FeesDetailsPage = () => {
               </div>
             )}
           </div>
-
+          <select
+            value={selectedBranch}
+            onChange={(e) => setSelectedBranch(e.target.value)}
+            className="border border-gray-300 px-4 py-3 rounded-lg text-gray-700 focus:ring-2 focus:ring-orange-400 outline-none"
+          >
+            <option value="">All Branches</option>
+            {branches.map((b) => (
+              <option key={b} value={b}>
+                {b}
+              </option>
+            ))}
+          </select>
           {/* Category Select */}
           <select
             value={selectedCategory}

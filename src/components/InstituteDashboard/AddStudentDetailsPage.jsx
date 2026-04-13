@@ -346,26 +346,7 @@ export default function AddTrainerDetailsPage() {
       setProfilePreview(URL.createObjectURL(file));
     }
   };
-  useEffect(() => {
-    const fetchRegisterConfig = async () => {
-      const ref = doc(db, "institutes", user.uid);
-      const snap = await getDoc(ref);
 
-      if (snap.exists()) {
-        const data = snap.data().registerConfig || {};
-
-        const prefix = (data.prefix || "REG").toUpperCase();
-        const counter = data.counter || 1;
-
-        setRegisterPrefix(prefix);
-        setRegisterCounter(counter);
-
-        setRegisterNumber(`${prefix}${String(counter).padStart(4, "0")}`);
-      }
-    };
-
-    if (user?.uid) fetchRegisterConfig();
-  }, [user]);
   /* -------------------- FORM DATA -------------------- */
   const [formData, setFormData] = useState({
     firstName: "",
@@ -483,6 +464,9 @@ export default function AddTrainerDetailsPage() {
       if (createLogin && !formData.email) {
         newErrors.email = "Email is required";
       }
+      if (!registerNumber.trim()) {
+        newErrors.registerNumber = "Register number is required";
+      }
       if (!formData.branch) newErrors.branch = "Branch number is required";
     }
     /* DOB FUTURE CHECK */
@@ -560,6 +544,7 @@ export default function AddTrainerDetailsPage() {
     setProfilePreview(null);
     setAvailableSubCategories([]);
     setStep(1);
+    setRegisterNumber("");
   };
 
   const timeSlots = [
@@ -665,14 +650,6 @@ export default function AddTrainerDetailsPage() {
       const instituteData = instituteSnap.data();
       const config = instituteData.registerConfig || {};
 
-      const currentCounter = config.counter || 1;
-      const prefix = (config.prefix || "REG").toUpperCase();
-
-      const newRegisterNumber = `${prefix}${String(currentCounter).padStart(
-        4,
-        "0",
-      )}`;
-
       const studentRef = doc(db, "students", customerUid);
 
       const studentSnap = await transaction.get(studentRef);
@@ -692,7 +669,7 @@ export default function AddTrainerDetailsPage() {
         role: "customer",
         monthlyFee: Number(formData.monthlyFee),
         defaultPassword: true,
-        registernumber: newRegisterNumber, // 🔥 IMPORTANT
+        registernumber: registerNumber,
         createdAt: serverTimestamp(),
       });
 
@@ -702,17 +679,8 @@ export default function AddTrainerDetailsPage() {
       });
 
       // ✅ UPDATE COUNTER INSIDE registerConfig
-      transaction.update(instituteRef, {
-        registerConfig: {
-          ...config,
-          counter: currentCounter + 1,
-        },
-      });
 
       // ✅ UI UPDATE
-      setRegisterNumber(
-        `${prefix}${String(currentCounter + 1).padStart(4, "0")}`,
-      );
     });
 
     alert("Student added successfully!");
@@ -816,11 +784,6 @@ export default function AddTrainerDetailsPage() {
         const instituteData = instituteSnap.data();
         const config = instituteData.registerConfig || {};
 
-        const currentCounter = config.counter || 1;
-        const prefix = (config.prefix || "REG").toUpperCase();
-
-        const newRegisterNumber = `${prefix}${String(currentCounter).padStart(4, "0")}`;
-
         const studentRef = doc(db, "students", customerUid);
 
         const studentSnap = await transaction.get(studentRef);
@@ -844,7 +807,7 @@ export default function AddTrainerDetailsPage() {
           monthlyFee: Number(formData.monthlyFee),
           defaultPassword: createLogin ? true : false,
 
-          registernumber: newRegisterNumber,
+          registernumber: registerNumber,
           createdAt: serverTimestamp(),
         });
 
@@ -854,17 +817,8 @@ export default function AddTrainerDetailsPage() {
         });
 
         // ✅ UPDATE COUNTER
-        transaction.update(instituteRef, {
-          registerConfig: {
-            ...config,
-            counter: currentCounter + 1,
-          },
-        });
 
         // ✅ UPDATE UI
-        setRegisterNumber(
-          `${prefix}${String(currentCounter + 1).padStart(4, "0")}`,
-        );
       });
 
       if (createLogin) {
@@ -968,11 +922,26 @@ Password: ${DEFAULT_PASSWORD}`);
               onChange={handleProfileUpload}
             />
           </div>
-          <div className="flex flex-col items-center mb-4">
-            <p className="text-sm text-gray-500">Registration Number</p>
-            <h2 className="text-2xl font-bold text-green-600 tracking-widest">
-              {registerNumber}
-            </h2>
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold mb-2">
+              Registration Number<span className="text-red-500">*</span>
+            </label>
+
+            <input
+              type="text"
+              className={inputClass}
+              value={registerNumber}
+              placeholder="Enter Register Number"
+              onChange={(e) => {
+                setRegisterNumber(e.target.value); // ✅ no restriction
+              }}
+            />
+
+            {!registerNumber && (
+              <span className="text-red-500 text-xs mt-1">
+                Register number is required
+              </span>
+            )}
           </div>
           {/* TITLE */}
           <div className="flex-1 flex flex-col items-center">

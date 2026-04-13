@@ -272,6 +272,10 @@ const StudentsAttendancePage = () => {
   };
 
   const handleSaveAll = async () => {
+    if (!selectedCategory || !selectedSubCategory) {
+      alert("Please select both Category and Sub Category before saving ❌");
+      return;
+    }
     const dayName = getDayName(selectedDate);
     for (let [studentId, status] of Object.entries(draftAttendance)) {
       if (status === "absent" && !absenceReasons[studentId]) {
@@ -409,7 +413,7 @@ const StudentsAttendancePage = () => {
     setShowExportModal(false);
   };
   return (
-   <div className="p-4 sm:p-6 lg:p-8 bg-white min-h-screen max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 bg-white min-h-screen max-w-7xl mx-auto">
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-3xl font-bold text-orange-500 flex items-center gap-2">
@@ -566,83 +570,82 @@ const StudentsAttendancePage = () => {
 
       {/* TABLE */}
       {/* TABLE */}
-<div className="border border-orange-300 rounded-xl overflow-x-auto">
-
-  {/* HEADER */}
-  <div className="grid grid-cols-5 min-w-[700px] bg-[#1F2937] text-orange-400 font-semibold p-4">
-    <div>Students Name</div>
-    <div>Session</div>
-    <div className="text-center">Present</div>
-    <div className="text-center">Absent</div>
-    <div className="text-center">Reason</div>
-  </div>
-
-  {/* ROWS */}
-  <div className="bg-white min-h-[500px]">
-    {paginatedStudents.map((s, index) => {
-      const record = draftAttendance[s.uid];
-
-      return (
-        <div
-          key={s.uid}
-          className="grid grid-cols-5 min-w-[700px] px-6 py-4 border-t items-center"
-        >
-          {/* NAME */}
-          <div className="flex items-center gap-2">
-            <span>{(currentPage - 1) * itemsPerPage + index + 1}.</span>
-            {s.firstName} {s.lastName}
-          </div>
-
-          {/* SESSION */}
-          <div>{s.sessions || "-"}</div>
-
-          {/* PRESENT */}
-          <div className="flex justify-center">
-            <input
-              type="checkbox"
-              checked={record === "present"}
-              onChange={() => saveAttendance(s, "present")}
-              className="w-5 h-5"
-            />
-          </div>
-
-          {/* ABSENT */}
-          <div className="flex justify-center">
-            <input
-              type="checkbox"
-              checked={record === "absent"}
-              onChange={() => saveAttendance(s, "absent")}
-              className="w-5 h-5"
-            />
-          </div>
-
-          {/* REASON */}
-          <div>
-            {record === "absent" && (
-              <select
-                value={absenceReasons[s.uid] || ""}
-                onChange={(e) =>
-                  setAbsenceReasons((prev) => ({
-                    ...prev,
-                    [s.uid]: e.target.value,
-                  }))
-                }
-                className="border rounded px-2 py-1 w-full"
-              >
-                <option value="">Select</option>
-                {ABSENCE_OPTIONS.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
+      <div className="border border-orange-300 rounded-xl overflow-x-auto">
+        {/* HEADER */}
+        <div className="grid grid-cols-5 min-w-[700px] bg-[#1F2937] text-orange-400 font-semibold p-4">
+          <div>Students Name</div>
+          <div>Session</div>
+          <div className="text-center">Present</div>
+          <div className="text-center">Absent</div>
+          <div className="text-center">Reason</div>
         </div>
-      );
-    })}
-  </div>
-</div>
+
+        {/* ROWS */}
+        <div className="bg-white min-h-[500px]">
+          {paginatedStudents.map((s, index) => {
+            const record = draftAttendance[s.uid];
+
+            return (
+              <div
+                key={s.uid}
+                className="grid grid-cols-5 min-w-[700px] px-6 py-4 border-t items-center"
+              >
+                {/* NAME */}
+                <div className="flex items-center gap-2">
+                  <span>{(currentPage - 1) * itemsPerPage + index + 1}.</span>
+                  {s.firstName} {s.lastName}
+                </div>
+
+                {/* SESSION */}
+                <div>{s.sessions || "-"}</div>
+
+                {/* PRESENT */}
+                <div className="flex justify-center">
+                  <input
+                    type="checkbox"
+                    checked={record === "present"}
+                    onChange={() => saveAttendance(s, "present")}
+                    className="w-5 h-5"
+                  />
+                </div>
+
+                {/* ABSENT */}
+                <div className="flex justify-center">
+                  <input
+                    type="checkbox"
+                    checked={record === "absent"}
+                    onChange={() => saveAttendance(s, "absent")}
+                    className="w-5 h-5"
+                  />
+                </div>
+
+                {/* REASON */}
+                <div>
+                  {record === "absent" && (
+                    <select
+                      value={absenceReasons[s.uid] || ""}
+                      onChange={(e) =>
+                        setAbsenceReasons((prev) => ({
+                          ...prev,
+                          [s.uid]: e.target.value,
+                        }))
+                      }
+                      className="border rounded px-2 py-1 w-full"
+                    >
+                      <option value="">Select</option>
+                      {ABSENCE_OPTIONS.map((r) => (
+                        <option key={r} value={r}>
+                          {r}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       <div className="flex flex-col sm:flex-row justify-end gap-4 mt-6">
         <button
