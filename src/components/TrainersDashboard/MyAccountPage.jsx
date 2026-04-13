@@ -904,7 +904,7 @@ const MyAccountPage = ({ setActiveMenu }) => {
 
       {/* EDIT TRAINER MODAL */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 lg:pl-[160px]">
           <div className="bg-white w-[95%] sm:w-[700px] rounded-2xl shadow-xl overflow-hidden">
             <div className="max-h-[75vh] overflow-y-auto">
               {/* HEADER */}
@@ -1440,9 +1440,9 @@ const MyAccountPage = ({ setActiveMenu }) => {
         </div>
       )}
       {showEditStudentModal && editingStudent && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white w-[95%] sm:w-[900px] rounded-2xl shadow-2xl">
-            <div className="max-h-[85vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 lg:pl-[220px]">
+          <div className="bg-white w-[95%] max-w-[700px] sm:max-w-[800px] md:max-w-[900px] rounded-2xl shadow-2xl mx-auto">
+            <div className="max-h-[80vh] sm:max-h-[85vh] overflow-y-auto">
               {/* HEADER */}
               <div className="flex justify-between items-center px-6 py-4 border-b bg-orange-50 rounded-t-2xl">
                 <div className="flex items-center gap-2">
@@ -1473,17 +1473,17 @@ const MyAccountPage = ({ setActiveMenu }) => {
                     Profile Information
                   </h3>
 
-                  <div className="flex flex-col sm:flex-row gap-6">
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-6">
                     <div className="flex flex-col items-center">
                       <p className="text-sm font-medium mb-2">Profile Image</p>
 
                       {editingStudent.profileImageUrl ? (
                         <img
                           src={editingStudent.profileImageUrl}
-                          className="w-28 h-28 rounded-xl object-cover border shadow"
+                          className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl object-cover border shadow"
                         />
                       ) : (
-                        <div className="w-28 h-28 bg-gray-200 rounded-xl flex items-center justify-center">
+                        <div className="w-24 h-24 sm:w-28 sm:h-28 bg-gray-200 rounded-xl flex items-center justify-center">
                           No Image
                         </div>
                       )}
@@ -1511,7 +1511,7 @@ const MyAccountPage = ({ setActiveMenu }) => {
                     </div>
 
                     {/* Basic Info */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1 min-w-0">
                       <div>
                         <label className="block text-sm font-medium mb-1">
                           First Name

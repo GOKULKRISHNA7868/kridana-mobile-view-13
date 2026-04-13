@@ -14,7 +14,9 @@ export default function StudentTimetable() {
   const [loading, setLoading] = useState(true);
 
   const [selectedEvent, setSelectedEvent] = useState(null);
-
+  const calendarRef = React.useRef(null);
+  const [is24Hour, setIs24Hour] = useState(false);
+  const [search, setSearch] = useState("");
   /* ---------------- AUTH ---------------- */
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
@@ -113,7 +115,9 @@ export default function StudentTimetable() {
     }).format(date);
   };
   /* ---------------- UI ---------------- */
-
+  const filteredEvents = events.filter((e) =>
+    e.title.toLowerCase().includes(search.toLowerCase()),
+  );
   if (loading) {
     return (
       <div className="h-screen flex flex-col items-center justify-center text-gray-500">
@@ -124,28 +128,97 @@ export default function StudentTimetable() {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 p-4 rounded-lg min-h-screen">
-      {/* HEADER */}
-      <h2 className="text-xl font-semibold mb-3 text-center">
+    <div className="bg-gray-100 p-3 sm:p-4 rounded-xl min-h-screen">
+      {/* -------- HEADER -------- */}
+      <h2 className="text-lg sm:text-xl font-semibold mb-3 text-center">
         📅 My Class Schedule
       </h2>
 
-      {/* CALENDAR */}
-      <FullCalendar
-        plugins={[dayGridPlugin, timeGridPlugin, listPlugin]}
-        initialView="timeGridWeek"
-        headerToolbar={{
-          left: "prev,next today",
-          center: "title",
-          right: "timeGridDay,timeGridWeek,dayGridMonth,listYear",
-        }}
-        allDaySlot={false}
-        height="auto"
-        events={events}
-        eventClick={(info) => {
-          setSelectedEvent(info.event.extendedProps.fullData);
-        }}
-      />
+      {/* -------- TOP BAR -------- */}
+      <div className="flex flex-col sm:flex-row justify-between gap-3 mb-4">
+        {/* LEFT */}
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            className="border px-3 py-1 rounded-md bg-white text-sm"
+            onChange={(e) =>
+              calendarRef.current.getApi().changeView(e.target.value)
+            }
+          >
+            <option value="timeGridDay">Day</option>
+            <option value="timeGridWeek">Week</option>
+            <option value="dayGridMonth">Month</option>
+            <option value="listYear">List</option>
+          </select>
+
+          {/* 12 / 24 TOGGLE */}
+          <div className="flex border rounded-md overflow-hidden text-sm">
+            <button
+              onClick={() => setIs24Hour(false)}
+              className={`px-3 py-1 ${
+                !is24Hour ? "bg-orange-500 text-white" : "bg-white"
+              }`}
+            >
+              12 hrs
+            </button>
+            <button
+              onClick={() => setIs24Hour(true)}
+              className={`px-3 py-1 ${
+                is24Hour ? "bg-orange-500 text-white" : "bg-white"
+              }`}
+            >
+              24 hrs
+            </button>
+          </div>
+        </div>
+
+        {/* RIGHT */}
+        <input
+          type="text"
+          placeholder="Search classes..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="border px-3 py-2 rounded-md w-full sm:w-56 text-sm"
+        />
+      </div>
+
+      {/* -------- CALENDAR -------- */}
+      <div className="bg-white p-2 sm:p-3 rounded-xl border border-orange-300 overflow-hidden">
+        <FullCalendar
+          ref={calendarRef}
+          plugins={[dayGridPlugin, timeGridPlugin, listPlugin]}
+          initialView="timeGridWeek"
+          headerToolbar={false} // ❌ remove default
+          allDaySlot={false}
+          height="auto"
+          events={filteredEvents} // ✅ filtered
+          /* 📱 RESPONSIVE */
+          expandRows={true}
+          stickyHeaderDates={true}
+          /* 📅 MONTH FIX */
+          dayMaxEvents={true}
+          /* ⏰ TIME FORMAT */
+          slotLabelFormat={{
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: !is24Hour,
+          }}
+          eventTimeFormat={{
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: !is24Hour,
+          }}
+          /* EVENT CLICK */
+          eventClick={(info) => {
+            setSelectedEvent(info.event.extendedProps.fullData);
+          }}
+          /* 🔥 EVENT UI */
+          eventContent={(info) => (
+            <div className="bg-orange-200 rounded-md px-2 py-1 text-[11px] sm:text-xs leading-tight overflow-hidden">
+              <div className="font-semibold truncate">{info.event.title}</div>
+            </div>
+          )}
+        />
+      </div>
 
       {/* EMPTY STATE */}
       {events.length === 0 && (
@@ -157,56 +230,40 @@ export default function StudentTimetable() {
       {/* ---------- MODAL ---------- */}
       {selectedEvent && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-3">
-          {/* ---------- MODAL ---------- */}
-          {selectedEvent && (
-            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-3">
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl w-full max-w-md shadow-xl space-y-4">
-                <h3 className="text-xl font-semibold text-center">
-                  📘 Class Details
-                </h3>
+          <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-2xl w-full max-w-md shadow-xl space-y-4">
+            <h3 className="text-lg sm:text-xl font-semibold text-center">
+              📘 Class Details
+            </h3>
 
-                <div className="space-y-2 text-sm">
-                  <p>
-                    <span className="font-semibold">📌 Category:</span>{" "}
-                    {selectedEvent.category}
-                  </p>
-
-                  <p>
-                    <span className="font-semibold">🎯 SubCategory:</span>{" "}
-                    {selectedEvent.subCategory}
-                  </p>
-
-                  <p>
-                    <span className="font-semibold">👨‍🏫 Trainer:</span>{" "}
-                    {selectedEvent.trainerName}
-                  </p>
-
-                  <p>
-                    <span className="font-semibold">📅 Date:</span>{" "}
-                    {formatDate(selectedEvent.start)}
-                  </p>
-
-                  <p>
-                    <span className="font-semibold">🕒 Time:</span>{" "}
-                    {formatTime(selectedEvent.start)} -{" "}
-                    {formatTime(selectedEvent.end)}
-                  </p>
-
-                  <p>
-                    <span className="font-semibold">👥 Students:</span>{" "}
-                    {selectedEvent.students?.length || 0}
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => setSelectedEvent(null)}
-                  className="w-full bg-gray-200 dark:bg-gray-700 py-2 rounded-lg mt-3"
-                >
-                  Close
-                </button>
-              </div>
+            <div className="space-y-2 text-sm">
+              <p>
+                <b>📌 Category:</b> {selectedEvent.category}
+              </p>
+              <p>
+                <b>🎯 SubCategory:</b> {selectedEvent.subCategory}
+              </p>
+              <p>
+                <b>👨‍🏫 Trainer:</b> {selectedEvent.trainerName}
+              </p>
+              <p>
+                <b>📅 Date:</b> {formatDate(selectedEvent.start)}
+              </p>
+              <p>
+                <b>🕒 Time:</b> {formatTime(selectedEvent.start)} -{" "}
+                {formatTime(selectedEvent.end)}
+              </p>
+              <p>
+                <b>👥 Students:</b> {selectedEvent.students?.length || 0}
+              </p>
             </div>
-          )}
+
+            <button
+              onClick={() => setSelectedEvent(null)}
+              className="w-full bg-gray-200 dark:bg-gray-700 py-2 rounded-lg"
+            >
+              Close
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -85,8 +85,8 @@ const sidebarSections = [
       "Add Events",
       "Chat Box",
       "Analytics",
-      "BookingsList",
-      "AddSportsFacilitiesPage",
+      //"BookingsList",
+      //"AddSportsFacilitiesPage",
     ],
   },
   {
@@ -277,10 +277,10 @@ const InstituteDashboard = () => {
         return <MyAccountLayout />;
       case "Customer & Management Settings":
         return <MyAccountPage setActiveMenu={setActiveMenu} />;
-      case "BookingsList":
-        return <BookingsList />;
-      case "AddSportsFacilitiesPage":
-        return <AddSportsFacilitiesPage />;
+      //case "BookingsList":
+      //return <BookingsList />;
+      //case "AddSportsFacilitiesPage":
+      //return <AddSportsFacilitiesPage />;
       case "Paid Recipets":
         return <PaidRecipet />;
       case "Payment & Subscription":

@@ -4,6 +4,7 @@ import { CartProvider } from "./context/CartContext";
 import { WishlistProvider } from "./context/WishlistContext";
 import { AuthProvider } from "./context/AuthContext";
 import ScrollToTop from "./components/ScrollToTop";
+import usePageTracking from "./hooks/usePageTracking";
 
 /* ================= CORE PAGES ================= */
 import RoleSelection from "./pages/RoleSelection.jsx";
@@ -75,6 +76,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Feedback from "./pages/Feedback";
 import HelpCenter from "./pages/HelpCenter.jsx";
 function App() {
+  usePageTracking();
   const location = useLocation();
 
   const hideNavbarPaths = [

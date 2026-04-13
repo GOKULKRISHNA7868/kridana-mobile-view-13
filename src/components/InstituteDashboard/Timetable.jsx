@@ -26,8 +26,10 @@ export default function ClassTime() {
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState(null);
   const [categoriesMap, setCategoriesMap] = useState({});
-
+  const calendarRef = React.useRef(null);
+  const [is24Hour, setIs24Hour] = useState(false);
   const [branches, setBranches] = useState([]);
+  const [search, setSearch] = useState("");
   const categories = [
     "Martial Arts",
     "Team Ball Sports",
@@ -484,229 +486,282 @@ export default function ClassTime() {
       count: s.students?.length || 0,
     },
   }));
-
+  const filteredEvents = events.filter((e) =>
+    e.title?.toLowerCase().includes(search.toLowerCase()),
+  );
   return (
-    <div className="bg-white dark:bg-gray-900 p-4 rounded-lg min-h-screen">
-      <FullCalendar
-        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-        initialView="timeGridWeek"
-        headerToolbar={{
-          left: "prev,next today",
-          center: "title",
-          right: "timeGridDay,timeGridWeek,dayGridMonth,listYear",
-        }}
-        slotMinTime="00:00:00"
-        slotMaxTime="24:00:00"
-        allDaySlot={false}
-        eventMinHeight={60}
-        height="auto"
-        events={events}
-        selectable={true}
-        select={(info) => {
-          const date = info.startStr.split("T")[0];
-          const start = info.startStr.split("T")[1]?.slice(0, 5);
-          const end = info.endStr.split("T")[1]?.slice(0, 5);
+    <div className="bg-gray-100 p-3 sm:p-4 rounded-xl min-h-screen">
+      {/* -------- TOP BAR -------- */}
+      <div className="flex flex-col sm:flex-row justify-between gap-3 mb-4">
+        {/* LEFT */}
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            className="border px-3 py-2 rounded-md bg-white text-sm w-full sm:w-auto"
+            onChange={(e) => {
+              const view = e.target.value;
+              calendarRef.current.getApi().changeView(view);
+            }}
+          >
+            <option value="timeGridDay">Day</option>
+            <option value="timeGridWeek">Week</option>
+            <option value="dayGridMonth">Month</option>
+            <option value="listWeek">List</option>
+          </select>
 
-          setEditId(null);
+          {/* TIME FORMAT */}
+          <div className="flex border rounded-md overflow-hidden text-sm w-full sm:w-auto">
+            <button
+              onClick={() => setIs24Hour(false)}
+              className={`flex-1 sm:flex-none px-3 py-2 ${
+                !is24Hour ? "bg-orange-500 text-white" : "bg-white"
+              }`}
+            >
+              12 hrs
+            </button>
+            <button
+              onClick={() => setIs24Hour(true)}
+              className={`flex-1 sm:flex-none px-3 py-2 ${
+                is24Hour ? "bg-orange-500 text-white" : "bg-white"
+              }`}
+            >
+              24 hrs
+            </button>
+          </div>
+        </div>
 
-          setForm({
-            date,
-            startTime: start,
-            endTime: end,
-            category: "",
-            subCategory: "",
-            branch: "",
-            trainerId: "",
-            students: [],
-          });
+        {/* RIGHT */}
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <input
+            type="text"
+            placeholder="Search here..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="border px-3 py-2 rounded-md w-full sm:w-56 text-sm"
+          />
 
-          setShowModal(true);
-        }}
-        eventClick={(info) => {
-          const event = schedule.find((s) => s.id === info.event.id);
+          <button
+            onClick={() => setShowModal(true)}
+            className="bg-orange-500 text-white px-4 py-2 rounded-md text-sm w-full sm:w-auto"
+          >
+            + Add New
+          </button>
+        </div>
+      </div>
 
-          setEditId(event.id);
+      {/* -------- CALENDAR -------- */}
+      <div className="bg-white p-2 sm:p-3 rounded-xl border border-orange-300 overflow-hidden touch-manipulation">
+        <FullCalendar
+          ref={calendarRef}
+          plugins={[
+            dayGridPlugin,
+            timeGridPlugin,
+            interactionPlugin,
+            listPlugin,
+          ]}
+          selectable={true}
+          selectMirror={true}
+          /* 👇 MOBILE FIX */
+          longPressDelay={100}
+          selectLongPressDelay={100}
+          eventLongPressDelay={100}
+          /* 👇 IMPORTANT */
+          selectOverlap={false}
+          initialView="timeGridDay"
+          headerToolbar={false}
+          slotMinTime="09:00:00"
+          slotMaxTime="20:00:00"
+          allDaySlot={false}
+          height="auto"
+          events={filteredEvents}
+          selectable={true}
+          /* ✅ RESPONSIVE FIX */
+          expandRows={true}
+          stickyHeaderDates={true}
+          dayMaxEvents={true}
+          /* TIME FORMAT */
+          slotLabelFormat={{
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: !is24Hour,
+          }}
+          eventTimeFormat={{
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: !is24Hour,
+          }}
+          /* SELECT */
+          select={(info) => {
+            const date = info.startStr.split("T")[0];
+            const start = info.startStr.split("T")[1]?.slice(0, 5);
+            const end = info.endStr.split("T")[1]?.slice(0, 5);
 
-          setForm({
-            date: info.event.startStr.split("T")[0],
-            startTime: info.event.startStr.split("T")[1]?.slice(0, 5),
-            endTime: info.event.endStr.split("T")[1]?.slice(0, 5),
-            category: event.category || "",
-            subCategory: event.subCategory || "",
-            branch: event.branch || "",
-            trainerId: event.trainerId || "",
-            students: event.students || [],
-          });
+            setEditId(null);
 
-          setShowModal(true);
-        }}
-        eventContent={(info) => {
-          return (
-            <div className="p-1 text-xs leading-tight">
-              <div className="font-semibold text-[13px]">
-                {info.event.title}
-              </div>
+            setForm({
+              date,
+              startTime: start,
+              endTime: end,
+              category: "",
+              subCategory: "",
+              branch: "",
+              trainerId: "",
+              students: [],
+            });
 
-              <div className="text-black-600">
+            setShowModal(true);
+          }}
+          /* CLICK */
+          eventClick={(info) => {
+            const event = schedule.find((s) => s.id === info.event.id);
+
+            setEditId(event.id);
+
+            setForm({
+              date: info.event.startStr.split("T")[0],
+              startTime: info.event.startStr.split("T")[1]?.slice(0, 5),
+              endTime: info.event.endStr.split("T")[1]?.slice(0, 5),
+              category: event.category || "",
+              subCategory: event.subCategory || "",
+              branch: event.branch || "",
+              trainerId: event.trainerId || "",
+              students: event.students || [],
+            });
+
+            setShowModal(true);
+          }}
+          /* EVENT UI */
+          eventContent={(info) => (
+            <div className="bg-orange-200 rounded-md px-2 py-1 text-[11px] sm:text-xs leading-tight overflow-hidden">
+              <div className="font-semibold truncate">{info.event.title}</div>
+              <div className="truncate">
                 👤 {info.event.extendedProps.trainer}
               </div>
-
-              <div className="text-black-600 font-medium">
-                👥 {info.event.extendedProps.count}
-              </div>
+              <div>👥 {info.event.extendedProps.count}</div>
             </div>
-          );
-        }}
-      />
+          )}
+        />
+      </div>
 
       {/* ---------- MODAL ---------- */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-3">
-          <div className="bg-white dark:bg-gray-800 p-5 sm:p-6 rounded-2xl w-full max-w-md shadow-xl space-y-4 animate-fadeIn">
-            <h3 className="text-xl font-semibold text-center">
+          <div className="bg-white p-4 sm:p-6 rounded-2xl w-full max-w-md shadow-xl space-y-4">
+            <h3 className="text-lg sm:text-xl font-semibold text-center">
               {isEdit ? "✏️ Edit Class" : "📅 Schedule Class"}
             </h3>
-            {/* TIME SELECTION */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm text-gray-500">Start Time</label>
-                <input
-                  type="time"
-                  className="w-full border rounded-lg p-2 mt-1"
-                  value={form.startTime}
-                  onChange={(e) =>
-                    setForm({ ...form, startTime: e.target.value })
-                  }
-                />
-              </div>
 
-              <div>
-                <label className="text-sm text-gray-500">End Time</label>
-                <input
-                  type="time"
-                  className="w-full border rounded-lg p-2 mt-1"
-                  value={form.endTime}
-                  onChange={(e) =>
-                    setForm({ ...form, endTime: e.target.value })
-                  }
-                />
-              </div>
-            </div>
-            {/* CATEGORY */}
+            {/* DATE */}
             <div>
-              <label className="text-sm text-gray-500">Category</label>
-              <select
+              <label className="text-sm text-gray-500">Date</label>
+              <input
+                type="date"
                 className="w-full border rounded-lg p-2 mt-1"
-                value={form.category}
-                onChange={(e) => {
-                  const selectedCategory = e.target.value;
-
-                  setForm((prev) => ({
-                    ...prev,
-                    category: selectedCategory,
-                    subCategory: "",
-                  }));
-                }}
-              >
-                <option value="">Select Category</option>
-
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
+                value={form.date}
+                onChange={(e) => setForm({ ...form, date: e.target.value })}
+              />
             </div>
+
+            {/* TIME */}
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                type="time"
+                className="border p-2 rounded-md w-full"
+                value={form.startTime}
+                onChange={(e) =>
+                  setForm({ ...form, startTime: e.target.value })
+                }
+              />
+              <input
+                type="time"
+                className="border p-2 rounded-md w-full"
+                value={form.endTime}
+                onChange={(e) => setForm({ ...form, endTime: e.target.value })}
+              />
+            </div>
+
+            {/* CATEGORY */}
+            <select
+              className="w-full border p-2 rounded-md"
+              value={form.category}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  category: e.target.value,
+                  subCategory: "",
+                })
+              }
+            >
+              <option>Select Category</option>
+              {categories.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
 
             {/* SUBCATEGORY */}
-            <div>
-              <label className="text-sm text-gray-500">Sub Category</label>
-              <select
-                className="w-full border rounded-lg p-2 mt-1"
-                value={form.subCategory}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    subCategory: e.target.value,
-                  }))
-                }
-              >
-                <option value="">Select SubCategory</option>
-
-                {(subCategoryMap[form.category] || []).map((sub) => (
-                  <option key={sub} value={sub}>
-                    {sub}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <select
+              className="w-full border p-2 rounded-md"
+              value={form.subCategory}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  subCategory: e.target.value,
+                })
+              }
+            >
+              <option>Select SubCategory</option>
+              {(subCategoryMap[form.category] || []).map((s) => (
+                <option key={s}>{s}</option>
+              ))}
+            </select>
 
             {/* BRANCH */}
-            <div>
-              <label className="text-sm text-gray-500">Branch</label>
-              <select
-                className="w-full border rounded-lg p-2 mt-1"
-                value={form.branch}
-                onChange={(e) => {
-                  const selectedBranch = e.target.value;
-
-                  const autoStudents = students
-                    .filter((s) => s.branch === selectedBranch)
-                    .map((s) => s.id);
-
-                  setForm({
-                    ...form,
-                    branch: selectedBranch,
-                    students: autoStudents,
-                  });
-                }}
-              >
-                <option value="">Select Branch</option>
-                {branches.map((b) => (
-                  <option key={b}>{b}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* STUDENT COUNT */}
-            {form.branch && (
-              <div className="bg-blue-50 text-blue-700 text-sm p-2 rounded-lg text-center">
-                👥 {form.students.length} students will be assigned
-                automatically
-              </div>
-            )}
+            <select
+              className="w-full border p-2 rounded-md"
+              value={form.branch}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  branch: e.target.value,
+                })
+              }
+            >
+              <option>Select Branch</option>
+              {branches.map((b) => (
+                <option key={b}>{b}</option>
+              ))}
+            </select>
 
             {/* TRAINER */}
-            <div>
-              <label className="text-sm text-gray-500">Trainer</label>
-              <select
-                className="w-full border rounded-lg p-2 mt-1"
-                value={form.trainerId}
-                onChange={(e) =>
-                  setForm({ ...form, trainerId: e.target.value })
-                }
-              >
-                <option value="">Select Trainer</option>
-                {trainers.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.firstName}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <select
+              className="w-full border p-2 rounded-md"
+              value={form.trainerId}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  trainerId: e.target.value,
+                })
+              }
+            >
+              <option>Select Trainer</option>
+              {trainers.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.firstName}
+                </option>
+              ))}
+            </select>
 
             {/* ACTIONS */}
-            <div className="flex gap-2 pt-2">
+            <div className="flex flex-col sm:flex-row gap-2 pt-2">
               <button
                 onClick={saveClass}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg"
+                className="flex-1 bg-orange-500 text-white py-2 rounded-lg"
               >
                 {editId ? "Update" : "Save"}
               </button>
 
               <button
                 onClick={() => setShowModal(false)}
-                className="flex-1 bg-gray-200 dark:bg-gray-700 py-2 rounded-lg"
+                className="flex-1 bg-gray-200 py-2 rounded-lg"
               >
                 Cancel
               </button>

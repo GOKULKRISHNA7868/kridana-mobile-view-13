@@ -24,8 +24,10 @@ export default function ClassTime() {
   const [schedule, setSchedule] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState(null);
-
+  const calendarRef = React.useRef(null);
+  const [is24Hour, setIs24Hour] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(true);
+  const [search, setSearch] = useState("");
   const categories = [
     "Martial Arts",
     "Team Ball Sports",
@@ -451,69 +453,170 @@ export default function ClassTime() {
     start: s.start?.toDate ? s.start.toDate() : s.start,
     end: s.end?.toDate ? s.end.toDate() : s.end,
   }));
-
+  const filteredEvents = events.filter((e) =>
+    e.title.toLowerCase().includes(search.toLowerCase()),
+  );
   return (
-    <div className="bg-white dark:bg-gray-900 p-4 rounded-lg min-h-screen">
-      <FullCalendar
-        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-        initialView="timeGridWeek"
-        headerToolbar={{
-          left: "prev,next today",
-          center: "title",
-          right: "timeGridDay,timeGridWeek,dayGridMonth,listYear",
-        }}
-        allDaySlot={false}
-        eventMinHeight={80}
-        eventDisplay="block"
-        dayMaxEventRows={false}
-        height="auto"
-        events={events}
-        selectable={true}
-        select={(info) => {
-          const date = info.startStr.split("T")[0];
-          const startTime = info.startStr.split("T")[1]?.slice(0, 5);
-          const endTime = info.endStr?.split("T")[1]?.slice(0, 5);
+    <div className="bg-gray-100 p-3 sm:p-4 rounded-xl min-h-screen">
+      {/* -------- TOP BAR -------- */}
+      <div className="flex flex-col sm:flex-row justify-between gap-3 mb-4">
+        {/* LEFT */}
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            className="border px-3 py-1 rounded-md bg-white text-sm"
+            onChange={(e) =>
+              calendarRef.current.getApi().changeView(e.target.value)
+            }
+          >
+            <option value="timeGridDay">Day</option>
+            <option value="timeGridWeek">Week</option>
+            <option value="dayGridMonth">Month</option>
+            <option value="listWeek">List</option>
+          </select>
 
-          setEditId(null);
+          {/* TOGGLE */}
+          <div className="flex border rounded-md overflow-hidden text-sm">
+            <button
+              onClick={() => setIs24Hour(false)}
+              className={`px-3 py-1 ${
+                !is24Hour ? "bg-orange-500 text-white" : "bg-white"
+              }`}
+            >
+              12 hrs
+            </button>
+            <button
+              onClick={() => setIs24Hour(true)}
+              className={`px-3 py-1 ${
+                is24Hour ? "bg-orange-500 text-white" : "bg-white"
+              }`}
+            >
+              24 hrs
+            </button>
+          </div>
+        </div>
 
-          setForm({
-            date,
-            startTime,
-            endTime,
-            category: "",
-            subCategory: "",
-            students: students.map((s) => s.id),
-          });
+        {/* RIGHT */}
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <input
+            type="text"
+            placeholder="Search here..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="border px-3 py-2 rounded-md w-full sm:w-56 text-sm"
+          />
 
-          setShowModal(true);
-        }}
-        eventClick={(info) => {
-          const event = schedule.find((s) => s.id === info.event.id);
+          <button
+            onClick={() => setShowModal(true)}
+            className="bg-orange-500 text-white px-4 py-2 rounded-md text-sm"
+          >
+            + Add New
+          </button>
+        </div>
+      </div>
 
-          setEditId(event.id);
+      {/* -------- CALENDAR -------- */}
+      <div className="bg-white p-2 sm:p-3 rounded-xl border border-orange-300 overflow-hidden">
+        <FullCalendar
+          ref={calendarRef}
+          plugins={[
+            dayGridPlugin,
+            timeGridPlugin,
+            interactionPlugin,
+            listPlugin,
+          ]}
+          selectable={true}
+          selectMirror={true}
+          longPressDelay={200}
+          selectLongPressDelay={200}
+          eventLongPressDelay={200}
+          initialView="timeGridDay"
+          headerToolbar={false}
+          allDaySlot={false}
+          height="auto"
+          events={filteredEvents} // ✅ filtered events
+          selectable={true}
+          slotMinTime="09:00:00"
+          slotMaxTime="20:00:00"
+          /* 🔥 RESPONSIVE FIX */
+          expandRows={true}
+          stickyHeaderDates={true}
+          /* 🔥 MONTH VIEW FIX (no overflow) */
+          dayMaxEvents={true}
+          /* ⏰ TIME FORMAT */
+          slotLabelFormat={{
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: !is24Hour,
+          }}
+          eventTimeFormat={{
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: !is24Hour,
+          }}
+          /* SELECT */
+          select={(info) => {
+            const date = info.startStr.split("T")[0];
+            const startTime = info.startStr.split("T")[1]?.slice(0, 5);
+            const endTime = info.endStr?.split("T")[1]?.slice(0, 5);
 
-          setForm({
-            date: info.event.startStr.split("T")[0],
-            startTime: info.event.startStr.split("T")[1]?.slice(0, 5),
-            endTime: info.event.endStr?.split("T")[1]?.slice(0, 5),
-            category: event.category || "",
-            subCategory: event.subCategory || "",
-            students: event.students || [],
-          });
+            setEditId(null);
 
-          setShowModal(true);
-        }}
-      />
+            setForm({
+              date,
+              startTime,
+              endTime,
+              category: "",
+              subCategory: "",
+              students: students.map((s) => s.id),
+            });
+
+            setShowModal(true);
+          }}
+          /* CLICK */
+          eventClick={(info) => {
+            const event = schedule.find((s) => s.id === info.event.id);
+
+            setEditId(event.id);
+
+            setForm({
+              date: info.event.startStr.split("T")[0],
+              startTime: info.event.startStr.split("T")[1]?.slice(0, 5),
+              endTime: info.event.endStr?.split("T")[1]?.slice(0, 5),
+              category: event.category || "",
+              subCategory: event.subCategory || "",
+              students: event.students || [],
+            });
+
+            setShowModal(true);
+          }}
+          /* 🔥 EVENT DESIGN FIX */
+          eventContent={(info) => (
+            <div className="bg-orange-200 rounded-md px-2 py-1 text-[11px] sm:text-xs leading-tight overflow-hidden">
+              <div className="font-semibold truncate">{info.event.title}</div>
+            </div>
+          )}
+        />
+      </div>
 
       {/* ---------- MODAL ---------- */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-3">
-          <div className="bg-white dark:bg-gray-800 p-5 sm:p-6 rounded-2xl w-full max-w-md shadow-xl space-y-4">
-            <h3 className="text-xl font-semibold text-center">
+          <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-2xl w-full max-w-md shadow-xl space-y-4">
+            <h3 className="text-lg sm:text-xl font-semibold text-center">
               {isEdit ? "✏️ Edit Class" : "📅 Schedule Class"}
             </h3>
             {/* TIME RANGE */}
             <div className="grid grid-cols-2 gap-3">
+              {/* DATE */}
+              <div>
+                <label className="text-sm text-gray-500">Date</label>
+                <input
+                  type="date"
+                  className="w-full border rounded-lg p-2 mt-1"
+                  value={form.date}
+                  onChange={(e) => setForm({ ...form, date: e.target.value })}
+                />
+              </div>
               <div>
                 <label className="text-sm text-gray-500">Start Time</label>
                 <input

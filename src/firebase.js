@@ -2,7 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
-
+import { getAnalytics, isSupported } from "firebase/analytics";
 const firebaseConfig = {
   apiKey: "AIzaSyDlmh88tHoBWtZL1Y69sRtgp-cnW-xglEs",
   authDomain: "testing-kridana.firebaseapp.com",
@@ -14,7 +14,15 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+let analytics = null;
 
+isSupported().then((yes) => {
+  if (yes) {
+    analytics = getAnalytics(app);
+  }
+});
+
+export { analytics };
 export const auth = getAuth(app);
 
 const secondaryApp = initializeApp(firebaseConfig, "Secondary");
